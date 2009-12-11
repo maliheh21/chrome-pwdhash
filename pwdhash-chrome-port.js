@@ -24,6 +24,7 @@ var PasswordInputListener = (function () {
 const VK_F2 = 113;
 const VK_TAB = 9;
 const VK_RETURN = 13;
+const VK_BACKSPACE = 8;
 const SPH_kPasswordKey2 = VK_F2;
 
 var Self = function (field) {
@@ -44,6 +45,8 @@ var Self = function (field) {
 	
 	var pwdhashit = false;
 	var notyethashed;
+	var lastMyKeyPress = new Date;
+	var domain = null;
 	
 	var methods = {
 		togglePasswordStatus: function (force) {
@@ -71,16 +74,26 @@ var Self = function (field) {
 			
 			if (pwdhashit && notyethashed) {
 				notyethashed = false;
-				
-				var uri = new String(field.ownerDocument.location);
-				var domain = (new SPH_DomainExtractor()).extractDomain(uri);
+				if (domain == null) domain = this.getDomain();
 				var hashed = (new SPH_HashedPassword(password, domain));
 				field.value = (hashed);
 			}
 		},
 		
+		getDomain: function () {
+			var uri = new String(field.ownerDocument.location);
+			return (new SPH_DomainExtractor()).extractDomain(uri);
+		},
+		
 		handleEvent: function(evt) {
 			if (evt.type == 'keydown') {
+				if (evt.keyCode == VK_BACKSPACE) {
+					if ((new Date) - lastMyKeyPress < 200) {
+						if (domain == null) domain = this.getDomain();
+						domain = prompt("Enter an alternative domain:", domain, 'Alternative domain');
+					}
+					lastMyKeyPress = new Date;
+				}
 				if (evt.keyCode == SPH_kPasswordKey2) {
 					this.togglePasswordStatus();
 				}
