@@ -19,77 +19,123 @@
 *
 */
 
-function PasswordInputListener (field) {
-	field.addEventListener('keydown', this, true);
-	field.addEventListener('change', this, true);
-	this.field = field;
-	this.pwdhashit = false;
-}
+var PasswordInputListener = (function () {
 
 const VK_F2 = 113;
 const VK_TAB = 9;
 const VK_RETURN = 13;
 const SPH_kPasswordKey2 = VK_F2;
 
-PasswordInputListener.prototype = {
-	togglePasswordStatus: function (force) {
-		if (force == null)
-			force = this.pwdhashit;
-		else
-			force = !force;
-		
-		if (force) {
-			this.pwdhashit = false;
-			this.field.style.backgroundColor = '#fff';
-		} else {
-			this.pwdhashit = true;
-			this.field.style.backgroundColor = '#ff0';
-		}
-	},
+var Self = function (field) {
+	this.field = field;
 	
-	submitPassword: function () {
-		var field = this.field;
-		var password = field.value;
-		
-		if (password.substr(0,2) == SPH_kPasswordPrefix) {
-			password = password.substr(2);
-			this.togglePasswordStatus(true);
+	for (var k in Self.registered) {
+		if (Self.registered[k].field == field) {
+			return;
 		}
-		
-		if (this.pwdhashit && this.notyethashed) {
-			this.notyethashed = false;
+	}
+	var index = Self.registered.length;
+	Self.registered.push(this);
+	
+	field.addEventListener('keydown', this, true);
+	field.addEventListener('change', this, true);
+	field.addEventListener('focus', this, true);
+	field.addEventListener('blur', this, true);
+	
+	var pwdhashit = false;
+	var notyethashed;
+	
+	var methods = {
+		togglePasswordStatus: function (force) {
+			if (force == null)
+				force = pwdhashit;
+			else
+				force = !force;
 			
-			var uri = new String(field.ownerDocument.location);
-			var domain = (new SPH_DomainExtractor()).extractDomain(uri);
-			var hasehd = (new SPH_HashedPassword(password, domain));
-			field.value = (hasehd);
-		}
-	},
-	
-	handleEvent: function(evt) {
-		if (evt.type == 'keydown') {
-			if (evt.keyCode == SPH_kPasswordKey2) {
-				this.togglePasswordStatus();
+			if (force) {
+				pwdhashit = false;
+				field.style.backgroundColor = '#fff';
+			} else {
+				pwdhashit = true;
+				field.style.backgroundColor = '#ff0';
 			}
-			if (evt.keyCode != VK_TAB && evt.keyCode != VK_RETURN) {
-				this.notyethashed = true;
-			}
-		}
+		},
 		
-		if (evt.type == 'change') {
-			if (this.field.value != '') {
-				this.submitPassword();
+		submitPassword: function () {field
+			var password = field.value;
+			
+			if (password.substr(0,2) == SPH_kPasswordPrefix) {
+				password = password.substr(2);
+				this.togglePasswordStatus(true);
+			}
+			
+			if (pwdhashit && notyethashed) {
+				notyethashed = false;
+				
+				var uri = new String(field.ownerDocument.location);
+				var domain = (new SPH_DomainExtractor()).extractDomain(uri);
+				var hashed = (new SPH_HashedPassword(password, domain));
+				field.value = (hashed);
+			}
+		},
+		
+		handleEvent: function(evt) {
+			if (evt.type == 'keydown') {
+				if (evt.keyCode == SPH_kPasswordKey2) {
+					this.togglePasswordStatus();
+				}
+				if (evt.keyCode != VK_TAB && evt.keyCode != VK_RETURN) {
+					notyethashed = true;
+				}
+			}
+			
+			if (evt.type == 'change') {
+				if (field.value != '') {
+					this.submitPassword();
+				}
+			}
+		
+			if (evt.type == 'blur') {
+				Self.selected = null;
+			}
+			
+			if (evt.type == 'focus') {
+				Self.selected = field;
+				Self.selectedIndex = index;
 			}
 		}
-	},
+	}
+	
+	for (var k in methods) {
+		this[k] = methods[k];
+	}
 }
 
-window.addEventListener('load', function () {
-	var result = document.evaluate('//input[@type="password"]',
-		document, null, 0, null);
-	var item;
-	while (item = result.iterateNext()) {
-		new PasswordInputListener(item);
+Self.registered = [];
+Self.selected = null;
+
+Self.searchInputs = function () {
+	var result = document.evaluate('//input[@type="password"]', document, null, 0, null);
+	var item; while (item = result.iterateNext()) {
+		new Self(item);
+	}
+}
+
+Self.searchInputs();
+
+document.addEventListener('keydown', function (e) {
+	if (e.keyCode == SPH_kPasswordKey2) {
+		Self.searchInputs();
+		if (Self.selected != null) {
+		} else {
+			if (Self.registered.length != 0) {
+				Self.registered[0].field.focus();
+				Self.registered[0].togglePasswordStatus();
+			}
+		}
 	}
 });
 
+return Self;
+
+}) ();
