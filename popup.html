@@ -1,0 +1,26 @@
+Domain: <input type="text" id="domain" value="" />
+<script type="text/javascript">
+
+//~ console.log('a');
+
+(function () {
+
+var $ = function (id) {
+	return document.getElementById(id);
+};
+
+
+alert(chrome.extension);
+chrome.extension.sendRequest({action: "getDomain"}, function(response) {
+	$('domain').value = response.domain;
+});
+
+//~ console.log('a');
+
+//~ $('domain').value = PasswordInputListener.getDomain();
+
+$('domain').value = 'a';
+
+})();
+
+</script>

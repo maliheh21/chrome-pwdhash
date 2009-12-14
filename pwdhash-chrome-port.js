@@ -27,44 +27,96 @@ const VK_RETURN = 13;
 const VK_BACKSPACE = 8;
 const SPH_kPasswordKey2 = VK_F2;
 
-var Self = function (field) {
-	this.field = field;
-	
-	for (var k in Self.registered) {
-		if (Self.registered[k].field == field) {
-			return;
+var registered = [];
+var selected = null;
+var domain = null;
+
+//~ var console = {dir: function(){}, log: function(){}};
+
+var classMethods = {
+	searchInputs: function () {
+		var result = document.evaluate('//input[@type="password"]', document, null, 0, null);
+		var items = [];
+		var item; while (item = result.iterateNext()) {
+			items.push(item);
 		}
-	}
-	var index = Self.registered.length;
-	Self.registered.push(this);
+		for (var k in items) {
+			new Self(items[k]);
+		}
+	},
 	
-	field.addEventListener('keydown', this, true);
-	field.addEventListener('change', this, true);
-	field.addEventListener('focus', this, true);
-	field.addEventListener('blur', this, true);
+	getDomain: function () {
+		if (domain != null) {
+			return domain;
+		} else {
+			var uri = new String(field.ownerDocument.location);
+			return (new SPH_DomainExtractor()).extractDomain(uri);
+		}
+	},
 	
-	var pwdhashit = false;
-	var notyethashed;
+	setDomain: function (value) {
+		domain = value;
+	},
+};
+
+var Self = function (field) {
+	var pwdhash_enabled = false;
+	var pwdhashed = false;
 	var lastMyKeyPress = new Date;
 	var domain = null;
+	var last_password;
+	this.field = field;
+	var index;
+	var inputExt = $('<div></div>');
 	
 	var methods = {
-		togglePasswordStatus: function (force) {
-			if (force == null)
-				force = pwdhashit;
-			else
-				force = !force;
+		initialize: function () {
+			for (var k in registered) {
+				if (registered[k].field == field) return;
+			}
+			index = registered.length;
+			registered.push(this);
 			
-			if (force) {
-				pwdhashit = false;
-				field.style.backgroundColor = '#fff';
-			} else {
-				pwdhashit = true;
-				field.style.backgroundColor = '#ff0';
+			field.addEventListener('keydown', this, true);
+			field.addEventListener('change', this, true);
+			field.addEventListener('focus', this, true);
+			field.addEventListener('blur', this, true);
+			
+			//~ var inputExt = $('<div></div>');
+			//~ $(field).after(inputExt);
+			//~ inputExt
+				//~ .append();
+		},
+		
+		destroy: function () {
+			field.removeEventListener('keydown', this, true);
+			field.removeEventListener('change', this, true);
+			field.removeEventListener('focus', this, true);
+			field.removeEventListener('blur', this, true);
+			if (pwdhashed) {
+				field.value = last_password;
 			}
 		},
 		
-		submitPassword: function () {field
+		togglePasswordStatus: function (force) {
+			var status;
+			
+			if (force == null) {
+				status = !pwdhash_enabled;
+			} else {
+				status = force;
+			}
+			
+			if (status) {
+				pwdhash_enabled = true;
+				field.style.backgroundColor = '#ff0';
+			} else {
+				pwdhash_enabled = false;
+				field.style.backgroundColor = '#fff';
+			}
+		},
+		
+		submitPassword: function () {
 			var password = field.value;
 			
 			if (password.substr(0,2) == SPH_kPasswordPrefix) {
@@ -72,49 +124,69 @@ var Self = function (field) {
 				this.togglePasswordStatus(true);
 			}
 			
-			if (pwdhashit && notyethashed) {
-				notyethashed = false;
+			if (pwdhash_enabled && !pwdhashed) {
+				pwdhashed = true;
 				if (domain == null) domain = this.getDomain();
 				var hashed = (new SPH_HashedPassword(password, domain));
+				last_password = password;
 				field.value = (hashed);
 			}
 		},
 		
 		getDomain: function () {
-			var uri = new String(field.ownerDocument.location);
-			return (new SPH_DomainExtractor()).extractDomain(uri);
+			return Self.getDomain();
 		},
 		
-		handleEvent: function(evt) {
-			if (evt.type == 'keydown') {
-				if (evt.keyCode == VK_BACKSPACE) {
-					if ((new Date) - lastMyKeyPress < 200) {
-						if (domain == null) domain = this.getDomain();
-						domain = prompt("Enter an alternative domain:", domain, 'Alternative domain');
-					}
-					lastMyKeyPress = new Date;
+		keydown: function(e) {
+			/*
+			if (e.keyCode == VK_BACKSPACE) {
+				if ((new Date) - lastMyKeyPress < 200) {
+					if (domain == null) domain = this.getDomain();
+					domain = prompt("Enter an alternative domain:", domain, 'Alternative domain');
 				}
-				if (evt.keyCode == SPH_kPasswordKey2) {
-					this.togglePasswordStatus();
-				}
-				if (evt.keyCode != VK_TAB && evt.keyCode != VK_RETURN) {
-					notyethashed = true;
-				}
+				lastMyKeyPress = new Date;
 			}
-			
-			if (evt.type == 'change') {
-				if (field.value != '') {
-					this.submitPassword();
-				}
+			*/
+			if (e.keyCode == SPH_kPasswordKey2) {
+				console.log('Press on F2');
+				this.togglePasswordStatus();
 			}
+		},
 		
-			if (evt.type == 'blur') {
-				Self.selected = null;
+		change: function(e) {
+			if (field.value != '') {
+				this.submitPassword();
 			}
+		},
+		
+		blur: function(e) {
+			selected = null;
+			if (field.value != '') {
+				this.submitPassword();
+			}
+		},
+		
+		focus: function(e) {
+			selected = field;
 			
-			if (evt.type == 'focus') {
-				Self.selected = field;
-				Self.selectedIndex = index;
+			if (pwdhash_enabled && pwdhashed) {
+				field.value = last_password;
+				pwdhashed = false;
+			}
+		},
+		
+		handleEvent: function(e) {
+			console.log('event: ' + e.type + ', pwdhash_enabled: ' + pwdhash_enabled);
+			
+			if (e.type == 'keydown') {
+				this.keydown(e);
+			} else if (e.type == 'change') {
+				this.change(e);
+			} else if (e.type == 'blur') {
+				this.blur(e);
+			} else if (e.type == 'focus') {
+				this.focus(e);
+			} else {
 			}
 		}
 	}
@@ -122,32 +194,67 @@ var Self = function (field) {
 	for (var k in methods) {
 		this[k] = methods[k];
 	}
+	
+	this.initialize();
 }
 
-Self.registered = [];
-Self.selected = null;
+for (var k in classMethods) {
+	Self[k] = classMethods[k];
+}
 
+/*
 Self.searchInputs = function () {
 	var result = document.evaluate('//input[@type="password"]', document, null, 0, null);
+	var items = [];
 	var item; while (item = result.iterateNext()) {
-		new Self(item);
+		items.push(item);
+	}
+	for (var k in items) {
+		new Self(items[k]);
 	}
 }
 
-Self.searchInputs();
+Self.getDomain = function () {
+	var uri = new String(field.ownerDocument.location);
+	return (new SPH_DomainExtractor()).extractDomain(uri);
+}
+*/
 
 document.addEventListener('keydown', function (e) {
 	if (e.keyCode == SPH_kPasswordKey2) {
-		Self.searchInputs();
-		if (Self.selected != null) {
-		} else {
-			if (Self.registered.length != 0) {
-				Self.registered[0].field.focus();
-				Self.registered[0].togglePasswordStatus();
+		if (selected == null) {
+			for (var k in registered) {
+				registered[k].destroy();
+			}
+			registered = [];
+			
+			Self.searchInputs();
+			if (registered.length != 0) {
+				registered[0].field.focus();
+				registered[0].togglePasswordStatus(true);
 			}
 		}
 	}
 });
+
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+/*
+	console.log(sender.tab ?
+	"from a content script:" + sender.tab.url :
+	"from the extension");
+	*/
+	if (request.action == "getDomain") {
+		sendResponse({domain: Self.getDomain()});
+		
+	} else if (request.action == "setDomain") {
+		Self.setDomain(request.domain);
+		sendResponse({ok: true});
+	}
+	//~ else
+		//~ sendResponse({}); // snub them.
+});
+
+Self.searchInputs();
 
 return Self;
 
