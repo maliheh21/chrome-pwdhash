@@ -1,4 +1,5 @@
 Domain: <input type="text" id="domain" value="" />
+<input type="button" id="validate" value="Commit changes" />
 <script type="text/javascript">
 
 //~ console.log('a');
@@ -9,17 +10,36 @@ var $ = function (id) {
 	return document.getElementById(id);
 };
 
+var sendRequest = function (params, callback) {
+	chrome.tabs.getSelected(null, function(tab) {
+		chrome.tabs.sendRequest(tab.id, params, callback);
+	});
+};
 
-alert(chrome.extension);
+var domain;
+
+sendRequest({action: "getDomain"}, function(response) {
+	$('domain').value = response.domain;
+	domain = response.domain;
+});
+
+$('validate').addEventListener('click', function () {
+	if (domain != $('domain').value)
+	sendRequest({action: "setDomain", domain: $('domain').value}, function () {});
+});
+
+/*
 chrome.extension.sendRequest({action: "getDomain"}, function(response) {
+	alert(response);
 	$('domain').value = response.domain;
 });
+*/
 
 //~ console.log('a');
 
 //~ $('domain').value = PasswordInputListener.getDomain();
 
-$('domain').value = 'a';
+//~ $('domain').value = 'a';
 
 })();
 

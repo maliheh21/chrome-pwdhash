@@ -33,6 +33,17 @@ var domain = null;
 
 //~ var console = {dir: function(){}, log: function(){}};
 
+var domains;
+
+//~ localStorage['domains'] = JSON.stringify({'google.com':'toto.fr'});
+
+if (localStorage['domains'] == undefined)
+	domains = {};
+else
+	domains = JSON.parse(localStorage['domains']);
+
+console.dir(domains);
+
 var classMethods = {
 	searchInputs: function () {
 		var result = document.evaluate('//input[@type="password"]', document, null, 0, null);
@@ -45,16 +56,31 @@ var classMethods = {
 		}
 	},
 	
-	getDomain: function () {
+	getDomain: function (field) {
 		if (domain != null) {
 			return domain;
 		} else {
-			var uri = new String(field.ownerDocument.location);
-			return (new SPH_DomainExtractor()).extractDomain(uri);
+			var uri;
+			if (field != null) {
+				uri = new String(field.ownerDocument.location);
+			} else {
+				uri = new String(document.location);
+			}
+			var res = (new SPH_DomainExtractor()).extractDomain(uri);
+			console.dir(res);
+			console.dir(domains[res]);
+			if (domains[res] != undefined) {
+				return domains[res];
+			}
+			return res;
 		}
 	},
 	
 	setDomain: function (value) {
+		domain = null;
+		console.log(this.getDomain());
+		domains[this.getDomain()] = value;
+		localStorage['domains'] = JSON.stringify(domains);
 		domain = value;
 	},
 };
@@ -126,7 +152,7 @@ var Self = function (field) {
 			
 			if (pwdhash_enabled && !pwdhashed) {
 				pwdhashed = true;
-				if (domain == null) domain = this.getDomain();
+				if (domain == null) domain = this.getDomain(field);
 				var hashed = (new SPH_HashedPassword(password, domain));
 				last_password = password;
 				field.value = (hashed);
@@ -236,6 +262,9 @@ document.addEventListener('keydown', function (e) {
 		}
 	}
 });
+	
+Self.searchInputs();
+
 
 chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 /*
@@ -253,8 +282,6 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 	//~ else
 		//~ sendResponse({}); // snub them.
 });
-
-Self.searchInputs();
 
 return Self;
 
