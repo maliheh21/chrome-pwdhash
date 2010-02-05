@@ -16,9 +16,13 @@
       ]
     }
   ],
+  "icons": {
+	"48": "images/icon48.png",
+	"128": "images/icon128.png"
+   },
   "permissions": ["tabs"],
   "browser_action": {
-    "default_icon": "images/logo.png",
+    "default_icon": "images/icon32.png",
     "default_title": "PwdHash",
     "popup": "popup.html"
   }
