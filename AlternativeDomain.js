@@ -31,6 +31,8 @@
 **/
 
 var AlternativeDomain = (function () {
+	var console = NullConsole;
+	
 	var Self = function (get_default) {
 		var self = this;
 		
