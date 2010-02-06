@@ -166,6 +166,7 @@ var PasswordInputListener = (function () {
 					var hashed = (new SPH_HashedPassword(password, domain));
 					last_password = password;
 					field.value = (hashed);
+					console.log(settings.retrieve('alertPwd'));
 					if (settings != undefined && settings.retrieve('alertPwd')) {
 						alert(password + " / " + field.value);
 					}

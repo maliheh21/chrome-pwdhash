@@ -24,16 +24,18 @@
 
 
 var Settings = (function () {
-	//~ var console = NullConsole;
+	var console = NullConsole;
 	
 	var Self = function () {
 		this.store = function (k, v) {
-			console.log(k + '=' + v);
+			console.log(k + ' <- ' + v);
 			localStorage[k] = JSON.stringify(v);
 		};
 		this.retrieve = function (k) {
-			console.log(k);
-			return (JSON.parse(localStorage[k]));
+			var v = localStorage[k];
+			if (v != undefined)
+				return (JSON.parse(v));
+			return null;
 		};
 		
 		var self = this;
