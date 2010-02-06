@@ -1,7 +1,7 @@
 
 var NullFunction = function(){};
-//~ var NullConsole = {dir: function(){}, log: function(){}};
-var NullConsole = {dir: function(){}, log: function(e){ console.log(e);}};
+var NullConsole = {dir: function(){}, log: function(){}};
+//~ var NullConsole = {dir: function(){}, log: function(e){ console.log(e);}};
 
 var NullKeyHooker = function (field) {
 	this.intercept = NullFunction;
