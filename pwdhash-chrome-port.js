@@ -19,214 +19,17 @@
 *
 */
 
-var NullFunction = function(){};
-var NullConsole = {dir: function(){}, log: function(){}};
-
-var AlternativeDomain = (function () {
-	var console = NullConsole;
-	var domain = null;
-	var domains = {};
-	
-	//~ localStorage['domains'] = JSON.stringify({'google.com':'toto.fr'});
-	if (localStorage['domains'] != undefined) {
-		try {
-			domains = localStorage['domains'];
-			domains = JSON.parse(domains);
-		} catch (e) {
-			console.log(e);
-		}
-	}
-	console.dir(domains);
-	
-	var Self = function (get_default) {
-		var self = this;
-		
-		this.setDomain = function (value) {
-			domain = null;
-			console.log(this.getDomain());
-			try {
-				domains[this.getDomain()] = value;
-				localStorage['domains'] = JSON.stringify(domains);
-				domain = value;
-			} catch (e) {
-				console.log(e);
-			}
-		};
-		this.getDomain = function () {
-			if (domain != null) {
-				return domain;
-			} else {
-				var res = get_default();
-				
-				console.dir(res);
-				console.dir(domains[res]);
-				
-				if (domains[res] != undefined) {
-					return domains[res];
-				}
-				return res;
-			}
-		};
-		
-		chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-			if (request.action == "getDomain") {
-				sendResponse({domain: self.getDomain()});
-				
-			} else if (request.action == "setDomain") {
-				Self.setDomain(request.domain);
-				sendResponse({ok: true});
-			}
-		});
-	};
-	
-	return Self;
-}) ();
-
-var ComplexKeyHooker = (function () {
-	//~ var console = NullConsole;
-	
-	var Self = function (field) {
-		this.value = '';
-		this.charmap = {};
-		this.i = 65;
-		this.intercept = function() {
-			field.addEventListener('keydown', this, true);
-			field.addEventListener('keyup', this, true);
-			field.addEventListener('keypress', this, true);
-		};
-		this.stop = function() {
-			field.removeEventListener('keydown', this, true);
-			field.removeEventListener('keyup', this, true);
-			field.removeEventListener('keypress', this, true);
-		};
-		this.mask = function (c) {
-		},
-		this.handleEvent = function(e) {
-			if (e.generatedByKeyHooker) {
-				//~ console.dir(e);
-				//~ console.log(String.fromCharCode(e.charCode));
-				return;
-			}
-			
-			if((e.type == 'keydown' || e.type == 'keyup') &&
-				e.keyCode >= e.DOM_VK_0 && e.keyCode <= e.DOM_VK_DIVIDE) {
-				e.stopPropagation();   // Don't let user JavaScript see this event
-			}
-			
-			if(e.type == 'keypress' || e.keyCode == 0) {
-				var c = String.fromCharCode(e.charCode);
-				var m = String.fromCharCode(this.i);
-				this.i += 1;
-				this.charmap[m] = c;
-				this.value += c;
-				console.dir(e);
-				e.stopPropagation();   // Don't let user JavaScript see this event
-				e.preventDefault();    // Do not let the character hit the page
-				Self.fire(e.target, this.i); //this.mask(e.charCode));
-			}
-		};
-		this.setValue = function (str) {
-			this.value = '';
-			return '';
-		};
-		this.getValue = function () {
-			return this.value;
-		};
-	}
-	
-	Self.fire = function(target, charCode) {
-		/*
-			var e = document.createEvent("KeyEvents");
-			console.log('rarara');
-			e.initKeyEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-			
-		var e = document.createEvent("Events");
-		e.initEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-		console.dir(e);
-		e.generatedByKeyHooker = true;
-		target.dispatchEvent(e);
-		*/
-		
-		var e = document.createEvent("KeyboardEvents");
-		//e.initKeyboardEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-		//e.initKeyboardEvent("keypress", true, true, window);
-		e.initKeyboardEvent('keypress', true, true, window, false, false, false, false, charCode, charCode);
-		//e.charCode = e.keyCode = e.which = charCode;
-		console.dir(e);
-		e.generatedByKeyHooker = true;
-		target.dispatchEvent(e);
-	};
-
-	return Self;
-}) ();
-
-var SimpleKeyHooker = (function () {
-	//~ var console = NullConsole;
-	
-	var Self = function (field) {
-		this.value = '';
-		this.intercept = function() {
-			field.addEventListener('keydown', this, true);
-			field.addEventListener('keyup', this, true);
-			field.addEventListener('keypress', this, true);
-			console.log('intercept');
-		};
-		this.stop = function() {
-			field.removeEventListener('keydown', this, true);
-			field.removeEventListener('keyup', this, true);
-			field.removeEventListener('keypress', this, true);
-			console.log('stop');
-		};
-		this.handleEvent = function(e) {
-			if (e.generatedByKeyHooker) {
-				return;
-			}
-			if (e.keyCode == 13) {
-				return;
-			}
-			
-			if((e.type == 'keydown' || e.type == 'keyup') &&
-				e.keyCode >= e.DOM_VK_0 && e.keyCode <= e.DOM_VK_DIVIDE) {
-				e.stopPropagation();   // Don't let user JavaScript see this event
-			}
-			
-			if(e.type == 'keypress' || e.keyCode == 0) {
-				var c = String.fromCharCode(e.charCode);
-				this.value += c;
-				e.stopPropagation();   // Don't let user JavaScript see this event
-				e.preventDefault();    // Do not let the character hit the page
-			}
-		};
-		this.setValue = function (str) {
-			this.value = '';
-			return '';
-		};
-		this.getValue = function () {
-			return this.value;
-		};
-	}
-	
-	Self.fire = function(target, charCode) {};
-
-	return Self;
-}) ();
-
-var NullKeyHooker = function (field) {
-	this.intercept = NullFunction;
-	this.stop = NullFunction;
-	this.setValue = function (str) {
-		return str;
-	};
-	this.getValue = function () {
-		return field.value;
-	};
-};
-
-KeyHooker = SimpleKeyHooker;
+/**
+  Required : null.js
+        "stanford-pwdhash/chrome/content/md5.js",
+	"stanford-pwdhash/chrome/content/domain-extractor.js",
+	"stanford-pwdhash/chrome/content/hashed-password.js",
+	"stanford-pwdhash/chrome/content/stanford-pwdhash.js",
+  Optional : AlternativeDomain.js KeyHooker.js
+**/
 
 var PasswordInputListener = (function () {
-	//~ var console = NullConsole;
-	//~ var pwdconsole = NullConsole;
+	var console = NullConsole;
 	
 	const VK_F2 = 113;
 	const VK_TAB = 9;
@@ -238,6 +41,7 @@ var PasswordInputListener = (function () {
 	var selected = null;
 
 	var alternativeDomain;
+	var settings;
 
 	var Self = function (field) {
 		this.field = field; // used to focus field
@@ -247,7 +51,7 @@ var PasswordInputListener = (function () {
 		var domain = null;
 		var last_password;
 		var index;
-		var inputExt = $('<div></div>');
+		//~ var inputExt = $('<div></div>');
 		var self = this;
 		
 		var evlistener = {
@@ -337,7 +141,15 @@ var PasswordInputListener = (function () {
 				
 				if (pwdhash_enabled) {
 					field.style.backgroundColor = '#ff0';
-					this.keyhooker = new KeyHooker(field);
+					if (typeof(KeyHooker) == 'undefined') {
+						this.keyhooker = new NullKeyHooker(field);
+					} else {
+						if (settings != undefined && settings.retrieve('noIntercept')) {
+							this.keyhooker = new NullKeyHooker(field);
+						} else {
+							this.keyhooker = new KeyHooker(field);
+						}
+					}
 					this.keyhooker.intercept();
 				} else {
 					field.style.backgroundColor = '#fff';
@@ -347,12 +159,6 @@ var PasswordInputListener = (function () {
 			
 			submitPassword: function () {
 				var password = this.keyhooker.getValue();
-				/*
-				if (password.substr(0,2) == SPH_kPasswordPrefix) {
-					password = password.substr(2);
-					this.togglePasswordStatus(true);
-				}
-				*/
 				
 				if (pwdhash_enabled && !pwdhashed) {
 					pwdhashed = true;
@@ -360,6 +166,9 @@ var PasswordInputListener = (function () {
 					var hashed = (new SPH_HashedPassword(password, domain));
 					last_password = password;
 					field.value = (hashed);
+					if (settings != undefined && settings.retrieve('alertPwd')) {
+						alert(password + " / " + field.value);
+					}
 				}
 			},
 			
@@ -408,8 +217,14 @@ var PasswordInputListener = (function () {
 	};
 	for (var k in classMethods) { Self[k] = classMethods[k]; }
 	
-	alternativeDomain = new AlternativeDomain(function () { return Self.getDomain(); });
+	if (typeof(AlternativeDomain) != 'undefined') {
+		alternativeDomain = new AlternativeDomain(function () { return Self.getDomain(); });
+	}
+	if (typeof(Settings) != 'undefined') {
+		settings = new Settings();
+	}
 	
+	// Auto-detect password inputs
 	document.addEventListener('keydown', function (e) {
 		if (e.keyCode == SPH_kPasswordKey2) {
 			if (selected == null) {
