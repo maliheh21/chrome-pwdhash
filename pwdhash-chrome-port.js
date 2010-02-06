@@ -251,13 +251,15 @@ var PasswordInputListener = (function () {
 		var self = this;
 		
 		var evlistener = {
+			keypress: function(e) {
+				if (e.keyCode == VK_RETURN) {
+					this.pwdblur();
+				}
+			},
 			keyup: function(e) {
 				if (field.value == '@@') {
 					field.value='';
 					self.togglePasswordStatus();
-				}
-				if (e.keyCode == VK_RETURN) {
-					this.pwdblur();
 				}
 			},
 			keydown: function(e) {
@@ -315,6 +317,7 @@ var PasswordInputListener = (function () {
 				field.addEventListener('focus', evlistener, true);
 				field.addEventListener('blur', evlistener, true);
 				field.addEventListener('keyup', evlistener, true);
+				field.addEventListener('keypress', evlistener, true);
 			},
 			
 			destroy: function () {
@@ -323,6 +326,7 @@ var PasswordInputListener = (function () {
 				field.removeEventListener('focus', evlistener, true);
 				field.removeEventListener('blur', evlistener, true);
 				field.removeEventListener('keyup', evlistener, true);
+				field.removeEventListener('keypress', evlistener, true);
 				if (pwdhashed) {
 					field.value = last_password;
 				}
