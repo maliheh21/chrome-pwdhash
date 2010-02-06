@@ -44,8 +44,16 @@ var Self = function (field) {
 	
 	var pwdhashit = false;
 	var notyethashed;
+	var self = this;
 	
 	var methods = {
+		destroy: function () {
+			field.removeEventListener('keydown', self, true);
+			field.removeEventListener('change', self, true);
+			field.removeEventListener('focus', self, true);
+			field.removeEventListener('blur', self, true);
+		},
+		
 		togglePasswordStatus: function (force) {
 			if (force == null)
 				force = pwdhashit;
@@ -114,20 +122,29 @@ var Self = function (field) {
 Self.registered = [];
 Self.selected = null;
 
-Self.searchInputs = function () {
-	var result = document.evaluate('//input[@type="password"]', document, null, 0, null);
+Self.searchFields = function (selector) {
+	var result = document.evaluate(selector, document, null, 0, null);
 	var item; while (item = result.iterateNext()) {
 		new Self(item);
 	}
+}
+
+Self.searchInputs = function () {
+	Self.searchFields('//input[@type="password"]');
+	Self.searchFields('//input[@type="PASSWORD"]');
 }
 
 Self.searchInputs();
 
 document.addEventListener('keydown', function (e) {
 	if (e.keyCode == SPH_kPasswordKey2) {
-		Self.searchInputs();
-		if (Self.selected != null) {
-		} else {
+		if (Self.selected == null) {
+			for (var k in Self.registered) {
+				Self.registered[k].destroy();
+			}
+			Self.registered = [];
+			Self.searchInputs();
+			
 			if (Self.registered.length != 0) {
 				Self.registered[0].field.focus();
 				Self.registered[0].togglePasswordStatus();
