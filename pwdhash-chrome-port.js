@@ -360,7 +360,6 @@ var PasswordInputListener = (function () {
 					var hashed = (new SPH_HashedPassword(password, domain));
 					last_password = password;
 					field.value = (hashed);
-					alert(field.value);
 				}
 			},
 			
@@ -392,9 +391,7 @@ var PasswordInputListener = (function () {
 		},
 		searchFields: function (selector) {
 			var result = document.evaluate(selector, document, null, 0, null);
-			//var items = [];
 			var item; while (item = result.iterateNext()) {
-				//items.push(item);
 				this.items.push(item);
 			}
 		},
