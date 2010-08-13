@@ -29,105 +29,122 @@ var KeyHooker = (function () {
 const VK_RETURN = 13;
 const VK_BACKSPACE = 8;
 
+var KBListeners = {
+	listeners: {},
+	i: -1,
+	addListener: function (handle) {
+		this.i++;
+		this.listeners[this.i] = handle;
+		return this.i;
+	},
+	removeListener: function (i) {
+		delete this.listeners[i];
+	},
+};
+var KBListenerHandler = function (e) {
+	for (var i in KBListeners.listeners) {
+		KBListeners.listeners[i].handleEvent(e);
+	}
+};
+
+window.addEventListener('keydown', KBListenerHandler, true);
+window.addEventListener('keyup', KBListenerHandler, true);
+window.addEventListener('keypress', KBListenerHandler, true);
+
 var ComplexKeyHooker = (function () {
-	var console = NullConsole;
-	
+	//var console = NullConsole;
+	var CHAR_LIST = 'AZERTYUIOPQSDFGHJKLMWXCVBNazertyuiopqsdfghjklmwxcvbn0123456789';
+	var idListener;
 	var Self = function (field) {
 		this.value = '';
 		this.charmap = {};
 		this.i = 65;
 		this.intercept = function() {
-			field.addEventListener('keydown', this, true);
-			field.addEventListener('keyup', this, true);
-			field.addEventListener('keypress', this, true);
+			idListener = KBListeners.addListener(this);
 		};
 		this.stop = function() {
-			field.removeEventListener('keydown', this, true);
-			field.removeEventListener('keyup', this, true);
-			field.removeEventListener('keypress', this, true);
+			KBListeners.removeListener(idListener);
 		};
 		this.mask = function (c) {
+			var i;
+			do {
+				i = Math.floor(Math.random() * CHAR_LIST.length);
+			} while (typeof this.charmap[CHAR_LIST[i]] != 'undefined');
+			var m = CHAR_LIST[i];
+			this.charmap[m] = c;
+			this.value += c;
+			return m;
 		},
 		this.handleEvent = function(e) {
 			if (e.generatedByKeyHooker) {
 				console.log('intercept a generatedByKeyHooker');
-				e.keyCode = 97;
-				e.which = 97;
-				console.dir(e);
-				//~ console.log(String.fromCharCode(e.charCode));
+				return;
+			}
+			
+			if (e.keyCode == VK_RETURN) {
 				return;
 			}
 			
 			if((e.type == 'keydown' || e.type == 'keyup') &&
-				e.keyCode >= e.DOM_VK_0 && e.keyCode <= e.DOM_VK_DIVIDE) {
+				e.keyCode >= 20 && e.keyCode <= 250) {
+				console.log('[PwdHash] ' + e.type + ': ' + e.keyCode);
 				e.stopPropagation();   // Don't let user JavaScript see this event
 			}
 			
 			if(e.type == 'keypress' || e.keyCode == 0) {
 				var c = String.fromCharCode(e.charCode);
-				var m = String.fromCharCode(this.i);
-				this.i += 1;
-				this.charmap[m] = c;
-				this.value += c;
-				console.log('intercept a keyboard event');
-				console.dir(e);
+				//console.log('intercept a keyboard event');
+				//console.dir(e);
 				e.stopPropagation();   // Don't let user JavaScript see this event
 				e.preventDefault();    // Do not let the character hit the page
-				//~ $(e.target).keypress();
-				Self.fire(e.target, this.i); //this.mask(e.charCode));
+				var m = this.mask(c);
+				Self.fire(e.target, m);
 			}
 		};
-		this.setValue = function (str) {
+		this.setHashedPassword = function (str) {
+			console.log("setHashPassword: " + str);
 			this.value = '';
-			return '';
+			field.value = str;
+		};
+		this.setPassword = function (str) {
+			console.log("setPassword: " + str);
+			this.value = '';
+			field.value = '';
+			this.charmap = {};
+			for (var i = 0; i < str.length; i += 1) {
+				var m = this.mask(str[i]);
+				Self.fire(field, m);
+			}
 		};
 		this.getValue = function () {
-			return this.value;
+			if (this.value == '') {
+				return field.value;
+			}
+			
+			var res = '';
+			for (var i = 0; i < field.value.length; i += 1) {
+				res += this.charmap[field.value[i]];
+			}
+			//console.log("Field: " + field.value);
+			//console.log("Password: " + res);
+			return res;
 		};
 	}
 	
-	Self.fire = function(target, charCode) {
-		// http://dev.w3.org/2006/webapi/DOM-Level-3-Events/html/DOM3-Events.html#events-Events-KeyboardEvent-initKeyboardEvent
+	Self.fire = function(target, str) {
+		// DOM 3 keyboard event doc : http://dev.w3.org/2006/webapi/DOM-Level-3-Events/html/DOM3-Events.html#events-Events-KeyboardEvent-initKeyboardEvent
+		// Solution found : http://stackoverflow.com/questions/345454/how-can-i-generate-a-keypress-event-in-safari-with-javascript
 		
-		// TODO find a solution
-		
-		/*
-			var e = document.createEvent("KeyEvents");
-			console.log('rarara');
-			e.initKeyEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-			
-		var e = document.createEvent("Events");
-		e.initEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-		console.dir(e);
-		e.generatedByKeyHooker = true;
-		target.dispatchEvent(e);
-		*/
-		/*
-		n DOMString typeArg, 
-                                       in boolean canBubbleArg, 
-                                       in boolean cancelableArg, 
-                                       in views::AbstractView viewArg, 
-                                       in DOMString keyIdentifierArg, 
-                                       in unsigned long keyLocationArg, 
-                                       in boolean ctrlKeyArg, 
-                                       in boolean shiftKeyArg, 
-                                       in boolean altKeyArg, 
-                                       in boolean metaKeyArg, 
-                                       in boolean altGraphKeyArg);
-		*/
-		var e = document.createEvent("KeyboardEvents");
-		//e.initKeyboardEvent("keypress", true, true, window, false, false, false, false, 0, charCode);
-		//e.initKeyboardEvent("keypress", true, true, window);
-		e.initKeyboardEvent('keypress', true, true, window, "U+0041");
-		//e.charCode = e.keyCode = e.which = charCode;
-		console.log('send a keyboard event');
-		e.generatedByKeyHooker = true;
-		console.dir(e);
-		target.dispatchEvent(e);
+		var eventObject = document.createEvent('TextEvent');
+		eventObject.initTextEvent('textInput', true, true, null, str);
+		eventObject.generatedByKeyHooker = true;
+		target.dispatchEvent(eventObject);
 	};
 
 	return Self;
 }) ();
+
+return ComplexKeyHooker;
 
 var SimpleKeyHooker = (function () {
 	var console = NullConsole;
@@ -168,9 +185,11 @@ var SimpleKeyHooker = (function () {
 				e.preventDefault();    // Do not let the character hit the page
 			}
 		};
-		this.setValue = function (str) {
-			this.value = '';
-			return '';
+		this.setHashedPassword = function (str) {
+			field.value = str;
+		};
+		this.setPassword = function (str) {
+			field.value = '';
 		};
 		this.getValue = function () {
 			return this.value;

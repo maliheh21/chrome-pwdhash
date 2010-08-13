@@ -1,3 +1,6 @@
+<html>
+<body>
+
 <style type="text/css">
 .FR {
 	float:right;
@@ -9,37 +12,65 @@
 	display:block;
 	font-size:8pt;
 }
-h1 {
-	font-size:20pt;
+h1, h1 span {
+	font-size:10pt;
+	font-weight:bold;
 }
 #validation_msg {
 	font-style:italic;
 }
+p, span, body {
+	font-family: Verdana, Arial;
+	font-size:10pt;
+}
+label {
+	cursor:pointer;
+}
 </style>
-<h1><img src="images/icon48.png" style="float:left"/><span style="float:right">Pwdhash<br/>Settings</span></h1>
-<br style="clear:both" />
-<form id="pwdhash_menu" style="width:250px;">
-<p><label for="domain" class="labelTextInput">Alternative domain</label>
-	<input type="text" id="domain" value="" /></p>
 
-<p><input type="checkbox" id="alertPwd" />
-	<label for="alertPwd">Show passwd/hash</label></p>
-<p><input type="checkbox" id="noIntercept" />
-	<label for="noIntercept">Disable interception security</label></p>
+<script type="text/javascript" src="jquery.js"></script>
+
+<div id="pwdhashEnabled">
+	<h1>
+		<img src="images/icon16.png"/>
+		<span>Settings for</span>
+		<span id="domainTitle"></span>
+	</h1>
+	<form id="pwdhash_menu" style="width:250px;">
+	<p><label for="domain" class="labelTextInput">Use an alternative domain</label>
+		<input type="text" id="domain" value="" /></p>
 	
-<center>
-	<p id="validation_msg"/></p>
-	<input type="button" id="validate" value="Save changes" />
-</center>
-</form>
+	<!--
+	<p><input type="checkbox" id="alertPwd" />
+		<label for="alertPwd">Prompt password and hash</label></p>
+	<p><input type="checkbox" id="noIntercept" />
+		<label for="noIntercept">Disable interception security</label></p>
+	-->
+	
+	<input type="button" value="Options" onclick="chrome.tabs.create({url: 'options.html'});" />
+	<center style="display:none">
+		<p id="validation_msg"/></p>
+		<input type="button" id="validate" value="Save changes" />
+	</center>
+	</form>
+</div>
+
+<div id="pwdhashDisabled" style="width:200px">
+	PwdHash is not active.
+</div>
+
 <script type="text/javascript">
 (function () {
 
-var $ = function (id) {
+var $P = function (id) {
 	var o = new (function (e) {
 		this.htmlElement = e;
 		this.click = function (fn) { e.addEventListener('click', fn); return o; };
 		this.blur = function (fn) { e.addEventListener('blur', fn); return o; };
+		this.keyup = function (fn) { e.addEventListener('keyup', fn); return o; };
+		this.html = function (a1) {
+			e.innerHTML = a1;
+		}
 		this.val = function (a1) {
 			if (a1 == undefined) {
 				if (e.type == 'checkbox')
@@ -57,6 +88,9 @@ var $ = function (id) {
 	return o;
 };
 
+$('#pwdhashEnabled').hide();
+$('#pwdhashDisabled').show();
+
 var sendRequest = function (params, callback) {
 	chrome.tabs.getSelected(null, function(tab) {
 		chrome.tabs.sendRequest(tab.id, params, callback);
@@ -64,23 +98,43 @@ var sendRequest = function (params, callback) {
 };
 
 var old_domain;
-var old_alertPwd;
 
 sendRequest({controller: 'AlternativeDomain', action: "getDomain"}, function(response) {
-	$('domain').val(response.domain);
+	$('#domain').val(response.domain);
 	old_domain = response.domain;
+	
+	$('#domainTitle').html(response.defaultDomain);
+	$('#pwdhashEnabled').show();
+	$('#pwdhashDisabled').hide();
 });
 
-var init_setting = function (k) {
-	sendRequest({controller: 'Settings', action: "retrieve", key: k}, function(response) {
-		$(k).val(response.value);
-		old[k] = response.value;
+var save_domain = function () {
+	sendRequest({controller: 'AlternativeDomain',
+		action: "setDomain",
+		domain: $('#domain').val()}
+	, function () {
+		old_domain = $('#domain').val();
 	});
-	settings_send[k] = function () {
-		if (old[k] != $(k).val()) {
-			sendRequest({controller: 'Settings', action: "store", key: k, value: $(k).val()}, function () { old[k] = $(k).val(); });
-		}
-	};
+};
+
+$('#domain').keyup(function () {
+	if (old_domain != $('#domain').val()) {
+		save_domain();
+	}
+});
+
+/*
+var init_setting = function (k) {
+	old[k] = false;
+	try {
+		old[k] = chrome.extension.getBackgroundPage().settings.retrieve(k);
+	} catch (e) {
+		console.error('init_setting error');
+	}
+	$P(k).val(old[k] ? true:false);
+	$P(k).click(function () {
+		chrome.extension.getBackgroundPage().settings.store(k, $P(k).val());
+	});
 };
 
 var old = {};
@@ -90,16 +144,23 @@ for (var k in settings) {
 	init_setting(settings[k]);
 }
 
-$('validate').click(function () {
-	if (old_domain != $('domain').val()) {
-		sendRequest({controller: 'AlternativeDomain', action: "setDomain", domain: $('domain').val()}, function () { old_domain = $('domain').val(); });
+*/
+
+/*
+$('#validate').click(function () {
+	if (old_domain != $('#domain').val()) {
+		save_domain();
 	}
 	for (var k in settings_send) {
 		settings_send[k]();
 	}
-	$('validation_msg').htmlElement.innerHTML = 'New settings saved !';
-	window.setTimeout(function () { $('validation_msg').htmlElement.innerHTML = ''; }, 2000);
+	$('#validation_msg').htmlElement.innerHTML = 'New settings saved !';
+	window.setTimeout(function () { $('#validation_msg').htmlElement.innerHTML = ''; }, 2000);
 });
+*/
 
 })();
 </script>
+
+</body>
+</html>

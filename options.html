@@ -1,0 +1,78 @@
+<html>
+<head><title>PwdHash Extension Options</title></head>
+<body>
+
+<style type="text/css">
+.FR {
+	float:right;
+}
+.FL {
+	float:left;
+}
+p, span, body {
+	font-family: Verdana, Arial;
+	font-size:10pt;
+}
+</style>
+
+<img src="images/icon128.png" />
+<h1>PwdHash Chrome Extension</h1>
+
+<p><input type="checkbox" id="alertPwd" />
+	<label for="alertPwd">Prompt password and hash</label></p>
+<p><input type="checkbox" id="noIntercept" />
+	<label for="noIntercept">Disable keyboard security</label></p>
+
+<script type="text/javascript" src="jquery.js"></script>
+<script type="text/javascript" src="null.js"></script>
+<script type="text/javascript" src="Settings.js"></script>
+<script type="text/javascript">
+(function () {
+
+var $P = function (id) {
+	var o = new (function (e) {
+		this.click = function (fn) { e.addEventListener('click', fn); return o; };
+		this.blur = function (fn) { e.addEventListener('blur', fn); return o; };
+		this.keyup = function (fn) { e.addEventListener('keyup', fn); return o; };
+		this.val = function (a1) {
+			if (a1 == undefined) {
+				if (e.type == 'checkbox')
+					return e.checked; 
+					else return e.value; 
+			}
+			if (e.type == 'checkbox') {
+				e.checked = a1;
+			}
+				else e.value = a1;
+			
+			return o;
+		};
+	})(document.getElementById(id));
+	return o;
+};
+
+var settings = new Settings.Remote('GlobalSettings');
+var old_setting_values = {};
+var setting_names = ['alertPwd', 'noIntercept'];
+for (var i in setting_names) {
+	(function () {
+		var k = setting_names[i];
+		old_setting_values[k] = false;
+		try {
+			old_setting_values[k] = settings.retrieve(k, function (value) {
+				$P(k).val(value);
+			});
+		} catch (e) {
+			console.error('init_setting error');
+		}
+		$P(k).click(function () {
+			settings.store(k, $P(k).val());
+		});
+	})();
+}
+
+})();
+</script>
+
+</body>
+</html>

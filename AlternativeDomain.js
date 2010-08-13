@@ -75,7 +75,7 @@ var AlternativeDomain = (function () {
 			
 			try {
 				if (request.action == "getDomain") {
-					sendResponse({domain: self.getDomain()});
+					sendResponse({domain: self.getDomain(), defaultDomain: get_default()});
 					
 				} else if (request.action == "setDomain") {
 					self.setDomain(request.domain);

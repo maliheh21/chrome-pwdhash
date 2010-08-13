@@ -6,8 +6,11 @@ var NullConsole = {dir: function(){}, log: function(){}};
 var NullKeyHooker = function (field) {
 	this.intercept = NullFunction;
 	this.stop = NullFunction;
-	this.setValue = function (str) {
-		return str;
+	this.setHashedPassword = function (str) {
+		field.value = str;
+	};
+	this.setPassword = function (str) {
+		field.value = '';
 	};
 	this.getValue = function () {
 		return field.value;

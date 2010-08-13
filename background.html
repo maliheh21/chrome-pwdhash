@@ -1,0 +1,24 @@
+<script type="text/javascript" src="null.js"></script>
+<script type="text/javascript" src="Settings.js"></script>
+<script type="text/javascript">
+var settings = new Settings();
+settings.listen('GlobalSettings');
+
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+	if (request.controller != 'Background_HTML') return;
+	try {
+		if (request.action == "setPwdHashIconOn") {
+			chrome.browserAction.setIcon({path: "images/icon32on.png"});
+			sendResponse({ok: true});
+			
+		} else if (request.action == "setPwdHashIconOff") {
+			chrome.browserAction.setIcon({path: "images/icon32off.png"});
+			sendResponse({ok: true});
+		}
+	} catch (e) {
+		sendResponse({ok: false});
+		console.log(e);
+	}
+});
+
+</script>
