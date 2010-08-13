@@ -1,0 +1,60 @@
+<html>
+<body>
+
+Password input : <input type="password" id="testPassword" /><br />
+Visible password input : <input type="text" id="visiblePassword" /><br />
+
+<div id="log" style="float:left; width:200px; height: 400px; overflow:auto; border:1px solid black; padding:5px;"></div>
+<div id="log2" style="float:left; width:200px; height: 400px; overflow:auto; border:1px solid black; padding:5px;"></div>
+
+<script type="text/javascript">
+
+var testPassword = document.getElementById('testPassword');
+var log = document.getElementById('log');
+var log2 = document.getElementById('log2');
+var appendLog = function (line) {
+	log.innerHTML += line + '<br/>';
+	if (console) console.log('[test_hooker.html] INPUT ' + line);
+	log.scrollTop = log.scrollHeight;
+}
+var appendLog2 = function (line) {
+	log2.innerHTML += line + '<br/>';
+	if (console) console.log('[test_hooker.html] WINDOW ' + line);
+	log2.scrollTop = log2.scrollHeight;
+}
+
+setInterval(function () {
+	document.getElementById('visiblePassword').value = testPassword.value;
+}, 1000);
+
+testPassword.addEventListener('keyup', function (ev) {
+	appendLog('keyup: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
+testPassword.addEventListener('keydown', function (ev) {
+	appendLog('keydown: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
+testPassword.addEventListener('keypress', function (ev) {
+	if (ev.keyCode == 0) {
+		appendLog('keypress: ' + String.fromCharCode(ev.charCode));
+	} else {
+		appendLog('keypress: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	}
+}, true);
+
+window.addEventListener('keyup', function (ev) {
+	appendLog2('keyup: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
+window.addEventListener('keydown', function (ev) {
+	appendLog2('keydown: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
+window.addEventListener('keypress', function (ev) {
+	if (ev.keyCode == 0) {
+		appendLog2('keypress: ' + String.fromCharCode(ev.charCode));
+	} else {
+		appendLog2('keypress: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	}
+}, true);
+
+</script>
+</body>
+</html>

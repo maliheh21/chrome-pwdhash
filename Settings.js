@@ -40,22 +40,46 @@ var Settings = (function () {
 		
 		var self = this;
 		
-		chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-			if (request.controller != 'Settings') return;
-			
-			try {
-				if (request.action == "retrieve") {
-					sendResponse({ok: true, value: self.retrieve(request.key)});
-					
-				} else if (request.action == "store") {
-					self.store(request.key, request.value);
-					sendResponse({ok: true});
+		this.listen = function (channel) {
+			chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+				if (request.controller != channel) return;
+				
+				try {
+					if (request.action == "retrieve") {
+						sendResponse({ok: true, value: self.retrieve(request.key)});
+						
+					} else if (request.action == "store") {
+						self.store(request.key, request.value);
+						sendResponse({ok: true});
+					}
+				} catch (e) {
+					sendResponse({ok: false});
+					console.log(e);
 				}
-			} catch (e) {
-				sendResponse({ok: false});
-				console.log(e);
-			}
-		});
+			});
+		};
+	}
+	
+	Self.Remote = function (channel) {
+		this.retrieve = function (k, fn) {
+			chrome.extension.sendRequest({
+				controller: channel,
+				action: 'retrieve',
+				key: k
+			}, function(response) {
+				if (fn) fn(response.value);
+			});
+		}
+		this.store = function (k, val, fn) {
+			chrome.extension.sendRequest({
+				controller: channel,
+				action: 'store',
+				key: k,
+				value: val
+			}, function(response) {
+				if (fn) fn(response.value);
+			});
+		}
 	}
 	
 	return Self;
