@@ -27,31 +27,37 @@ setInterval(function () {
 	document.getElementById('visiblePassword').value = testPassword.value;
 }, 1000);
 
+testPassword.addEventListener('textinput', function (ev) {
+	appendLog(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
 testPassword.addEventListener('keyup', function (ev) {
-	appendLog('keyup: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	appendLog(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 }, true);
 testPassword.addEventListener('keydown', function (ev) {
-	appendLog('keydown: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	appendLog(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 }, true);
 testPassword.addEventListener('keypress', function (ev) {
 	if (ev.keyCode == 0) {
-		appendLog('keypress: ' + String.fromCharCode(ev.charCode));
+		appendLog(ev.type + ': ' + String.fromCharCode(ev.charCode));
 	} else {
-		appendLog('keypress: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+		appendLog(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 	}
 }, true);
 
+window.addEventListener('textinput', function (ev) {
+	appendLog2(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+}, true);
 window.addEventListener('keyup', function (ev) {
-	appendLog2('keyup: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	appendLog2(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 }, true);
 window.addEventListener('keydown', function (ev) {
-	appendLog2('keydown: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+	appendLog2(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 }, true);
 window.addEventListener('keypress', function (ev) {
 	if (ev.keyCode == 0) {
-		appendLog2('keypress: ' + String.fromCharCode(ev.charCode));
+		appendLog2(ev.type + ': ' + String.fromCharCode(ev.charCode));
 	} else {
-		appendLog2('keypress: ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
+		appendLog2(ev.type + ': ' + ev.keyCode + ' ' + String.fromCharCode(ev.keyCode));
 	}
 }, true);
 

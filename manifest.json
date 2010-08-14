@@ -13,6 +13,7 @@
         "stanford-pwdhash/chrome/content/stanford-pwdhash.js",
         "null.js",
         "AlternativeDomain.js",
+        "jquery.js",
         "KeyHooker.js",
         "Settings.js",
         "pwdhash-chrome-port.js"
