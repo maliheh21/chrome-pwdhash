@@ -69,6 +69,10 @@ var PasswordInputListener = (function () {
 				if (e.keyCode == SPH_kPasswordKey2) {
 					console.log('Press on F2');
 					self.togglePasswordStatus();
+					if (!pwdhash_enabled) {
+						e.stopPropagation();
+						e.preventDefault();
+					}
 				}
 			},
 			change: function(e) {
@@ -82,34 +86,26 @@ var PasswordInputListener = (function () {
 				this.pwdfocus();
 			},
 			handleEvent: function(e) {
-				console.log('event: ' + e.type + ', pwdhash_enabled: ' + pwdhash_enabled);
+				//console.log('event: ' + e.type + ', pwdhash_enabled: ' + pwdhash_enabled);
 				
 				if (this[e.type] != undefined) this[e.type](e);
 			},
 			pwdblur: function() {
+				//console.log('pwdblur');
 				if (pwdhash_enabled) {
-					if (typeof self.keyhooker != 'undefined') {
-						if (self.keyhooker.getValue() != '') {
-							self.submitPassword();
-						}
-						self.keyhooker.stop();
-					} else {
-						if (field.value != '') {
-							self.submitPassword();
-						}
+					if (self.keyhooker.getValue() != '') {
+						self.submitPassword();
 					}
+					self.keyhooker.unIntercept();
 				}
 			},
 			pwdfocus: function() {
+				//console.log('pwdfocus');
 				selected = field;
 				if (pwdhash_enabled) {
+					self.keyhooker.intercept();
 					if (pwdhashed) {
-						if (typeof self.keyhooker != 'undefined') {
-							self.keyhooker.intercept();
-							self.keyhooker.setPassword(last_password);
-						} else {
-							field.value = last_password;
-						}
+						self.keyhooker.setPassword(last_password);
 						pwdhashed = false;
 					}
 				}
@@ -119,11 +115,19 @@ var PasswordInputListener = (function () {
 		var methods = {
 			initialize: function () {
 				for (var k in registered) {
+					console.log(field);
 					if (registered[k].field == field) return;
 				}
+
+				if (field.pwdHashListener) {
+					return;
+				}
+				field.pwdHashListener = this;
+				
 				index = registered.length;
 				registered.push(this);
 				
+				console.log('PwdHash ADD Listeners (count: ' + registered.length + ')');
 				field.addEventListener('keydown', evlistener, true);
 				field.addEventListener('change', evlistener, true);
 				field.addEventListener('focus', evlistener, true);
@@ -134,9 +138,27 @@ var PasswordInputListener = (function () {
 				if (typeof Settings != 'undefined') {
 					this.settings = new Settings.Remote('GlobalSettings');
 				}
+				
+				if (typeof(KeyHooker) == 'undefined') {
+					this.keyhooker = new NullKeyHooker(field);
+					
+				} else {
+					var _this = this;
+					this.keyhooker = new KeyHooker(field);
+					
+					if (typeof this.settings != 'undefined') {
+						this.settings.retrieve('noIntercept', function (value) {
+							if (value) {
+								_this.keyhooker = new NullKeyHooker(field);
+							}
+						});
+					}
+				}
 			},
 			
 			destroy: function () {
+				console.log('PwdHash REMOVE Listeners (count: ' + registered.length + ')');
+				
 				field.removeEventListener('keydown', evlistener, true);
 				field.removeEventListener('change', evlistener, true);
 				field.removeEventListener('focus', evlistener, true);
@@ -144,8 +166,10 @@ var PasswordInputListener = (function () {
 				field.removeEventListener('keyup', evlistener, true);
 				field.removeEventListener('keypress', evlistener, true);
 				if (pwdhashed) {
+					this.keyhooker.unIntercept();
 					field.value = last_password;
 				}
+				field.pwdHashListener = null;
 			},
 
 			isEnabled: function () {
@@ -154,29 +178,18 @@ var PasswordInputListener = (function () {
 			
 			togglePasswordStatus: function (force) {
 				pwdhash_enabled = (force != undefined ? force : !pwdhash_enabled);
+				field.value = '';
 				
 				if (pwdhash_enabled) {
+					console.log('PwdHash turn on');
 					field.style.backgroundColor = '#ff0';
-					if (typeof(KeyHooker) == 'undefined') {
-						this.keyhooker = new NullKeyHooker(field);
-						
-					} else {
-						var _this = this;
-						this.keyhooker = new KeyHooker(field);
-						
-						if (typeof this.settings != 'undefined') {
-							this.settings.retrieve('noIntercept', function (value) {
-								if (value) {
-									_this.keyhooker = new NullKeyHooker(field);
-								}
-							});
-						}
-					}
 					this.keyhooker.intercept();
 					chrome.extension.sendRequest({controller: 'Background_HTML', action: 'setPwdHashIconOn'});
+					
 				} else {
+					console.log('PwdHash turn off');
 					field.style.backgroundColor = '#fff';
-					this.keyhooker.stop();
+					this.keyhooker.unIntercept();
 					chrome.extension.sendRequest({controller: 'Background_HTML', action: 'setPwdHashIconOff'});
 				}
 			},
@@ -190,11 +203,7 @@ var PasswordInputListener = (function () {
 					var hashed = (new SPH_HashedPassword(password, domain));
 					last_password = password;
 					
-					if (typeof this.keyhooker != 'undefined') {
-						this.keyhooker.setHashedPassword(hashed);
-					} else {
-						field.value = (hashed);
-					}
+					this.keyhooker.setHashedPassword(hashed);
 					
 					if (typeof this.settings != 'undefined') {
 						this.settings.retrieve('alertPwd', function (value) {
@@ -267,6 +276,7 @@ var PasswordInputListener = (function () {
 				Self.searchInputs();
 				if (registered.length != 0) {
 					registered[0].field.focus();
+					selected = registered[0].field;
 					registered[0].togglePasswordStatus(true);
 				}
 			}
