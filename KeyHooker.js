@@ -26,21 +26,25 @@
 
 var KeyHooker = (function () {
 
+var console = NullConsole;
+
 const VK_RETURN = 13;
 const VK_BACKSPACE = 8;
 const VK_NUM_0 = 48;
 const VK_DIVIDE = 111;
+const VK_CAPSLOCK = 20;
 
 var KBListeners = {
 	listeners: {},
-	i: -1,
 	addListener: function (handle) {
-		this.i++;
-		this.listeners[this.i] = handle;
-		return this.i;
+		console.log('ADD - KBListeners Length: ', this.listeners);
+		if (typeof this.listeners[handle.instanceNo] == 'undefined') {
+			this.listeners[handle.instanceNo] = handle;
+		}
 	},
-	removeListener: function (i) {
-		delete this.listeners[i];
+	removeListener: function (handle) {
+		console.log('REMOVE - KBListeners Length: ', this.listeners);
+		delete this.listeners[handle.instanceNo];
 	},
 };
 var KBListenerHandler = function (e) {
@@ -49,23 +53,26 @@ var KBListenerHandler = function (e) {
 	}
 };
 
+var KeyHookerInstanceCount = 0;
+
 window.addEventListener('keydown', KBListenerHandler, true);
 window.addEventListener('keyup', KBListenerHandler, true);
 window.addEventListener('keypress', KBListenerHandler, true);
 
 var ComplexKeyHooker = (function () {
-	//var console = NullConsole;
 	var CHAR_LIST = 'AZERTYUIOPQSDFGHJKLMWXCVBNazertyuiopqsdfghjklmwxcvbn0123456789';
 	var idListener;
 	var Self = function (field) {
 		this.value = '';
 		this.charmap = {};
-		this.i = 65;
+		this.instanceNo = KeyHookerInstanceCount++;
 		this.intercept = function() {
-			idListener = KBListeners.addListener(this);
+			console.log('intercept');
+			KBListeners.addListener(this);
 		};
-		this.stop = function() {
-			KBListeners.removeListener(idListener);
+		this.unIntercept = function() {
+			console.log('unIntercept');
+			KBListeners.removeListener(this);
 		};
 		this.mask = function (c) {
 			var i;
@@ -75,29 +82,33 @@ var ComplexKeyHooker = (function () {
 			var m = CHAR_LIST[i];
 			this.charmap[m] = c;
 			this.value += c;
+			console.log(c + ' -> ' + m);
 			return m;
 		},
 		this.handleEvent = function(e) {
+			//console.log('[PwdHash] ' + e.type + ': ' + e.keyCode + ' ' + String.fromCharCode(e.keyCode));
+			
 			if (e.generatedByKeyHooker) {
 				console.log('intercept a generatedByKeyHooker');
 				return;
 			}
 			
-			if (e.keyCode == VK_RETURN) {
-				return;
-			}
-			
-			if((e.type == 'keydown' || e.type == 'keyup')
-					&& VK_NUM_0 <= e.keyCode && e.keyCode <= VK_DIVIDE)
+			if(e.type == 'keydown' || e.type == 'keyup')
 			{
-				console.log('[PwdHash] ' + e.type + ': ' + e.keyCode + ' ' + String.fromCharCode(e.keyCode));
+				if (!(VK_NUM_0 <= e.keyCode && e.keyCode <= VK_DIVIDE)) {
+					return;
+				}
+				//console.log('Keydown KeyUp events');
 				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 			}
 			
 			if(e.type == 'keypress' || e.keyCode == 0) {
+				if (e.keyCode <= VK_CAPSLOCK) {
+					return;
+				}
+				
+				//console.log('Printable intercepted');
 				var c = String.fromCharCode(e.charCode);
-				//console.log('intercept a keyboard event');
-				//console.dir(e);
 				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 				e.preventDefault();    // Do not let the character hit the page
 				var m = this.mask(c);
@@ -128,8 +139,8 @@ var ComplexKeyHooker = (function () {
 			for (var i = 0; i < field.value.length; i += 1) {
 				res += this.charmap[field.value[i]];
 			}
-			//console.log("Field: " + field.value);
-			//console.log("Password: " + res);
+			console.log("Field: " + field.value);
+			console.log("Password: " + res);
 			return res;
 		};
 	}
@@ -154,20 +165,14 @@ var SimpleKeyHooker = (function () {
 	
 	var Self = function (field) {
 		this.value = '';
+		this.instanceNo = KeyHookerInstanceCount++;
 		this.intercept = function() {
-			field.addEventListener('keydown', this, true);
-			field.addEventListener('keyup', this, true);
-			field.addEventListener('keypress', this, true);
-			console.log('intercept');
+			KBListeners.addListener(this);
 		};
-		this.stop = function() {
-			field.removeEventListener('keydown', this, true);
-			field.removeEventListener('keyup', this, true);
-			field.removeEventListener('keypress', this, true);
-			console.log('stop');
+		this.unIntercept = function() {
+			KBListeners.removeListener(this);
 		};
 		this.handleEvent = function(e) {
-			console.log(e.type);
 			if (e.generatedByKeyHooker || e.keyCode == VK_RETURN) {
 				return;
 			}
@@ -178,13 +183,13 @@ var SimpleKeyHooker = (function () {
 			
 			if((e.type == 'keydown' || e.type == 'keyup') &&
 				e.keyCode >= e.DOM_VK_0 && e.keyCode <= e.DOM_VK_DIVIDE) {
-				e.stopPropagation();   // Don't let user JavaScript see this event
+				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 			}
 			
 			if(e.type == 'keypress' || e.keyCode == 0) {
 				var c = String.fromCharCode(e.charCode);
 				this.value += c;
-				e.stopPropagation();   // Don't let user JavaScript see this event
+				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 				e.preventDefault();    // Do not let the character hit the page
 			}
 		};
