@@ -28,6 +28,8 @@ var KeyHooker = (function () {
 
 const VK_RETURN = 13;
 const VK_BACKSPACE = 8;
+const VK_NUM_0 = 48;
+const VK_DIVIDE = 111;
 
 var KBListeners = {
 	listeners: {},
@@ -85,17 +87,18 @@ var ComplexKeyHooker = (function () {
 				return;
 			}
 			
-			if((e.type == 'keydown' || e.type == 'keyup') &&
-				e.keyCode >= 20 && e.keyCode <= 250) {
-				console.log('[PwdHash] ' + e.type + ': ' + e.keyCode);
-				e.stopPropagation();   // Don't let user JavaScript see this event
+			if((e.type == 'keydown' || e.type == 'keyup')
+					&& VK_NUM_0 <= e.keyCode && e.keyCode <= VK_DIVIDE)
+			{
+				console.log('[PwdHash] ' + e.type + ': ' + e.keyCode + ' ' + String.fromCharCode(e.keyCode));
+				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 			}
 			
 			if(e.type == 'keypress' || e.keyCode == 0) {
 				var c = String.fromCharCode(e.charCode);
 				//console.log('intercept a keyboard event');
 				//console.dir(e);
-				e.stopPropagation();   // Don't let user JavaScript see this event
+				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 				e.preventDefault();    // Do not let the character hit the page
 				var m = this.mask(c);
 				Self.fire(e.target, m);
