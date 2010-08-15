@@ -45,9 +45,10 @@ label {
 		<label for="alertPwd">Prompt password and hash</label></p>
 	<p><input type="checkbox" id="noIntercept" />
 		<label for="noIntercept">Disable interception security</label></p>
+	<input type="button" value="Options" onclick="chrome.tabs.create({url: 'options.html'});" />
 	-->
 	
-	<input type="button" value="Options" onclick="chrome.tabs.create({url: 'options.html'});" />
+	<a href="javascript:chrome.tabs.create({url: 'options.html'});">Options</a>
 	<center style="display:none">
 		<p id="validation_msg"/></p>
 		<input type="button" id="validate" value="Save changes" />
@@ -98,12 +99,13 @@ var sendRequest = function (params, callback) {
 };
 
 var old_domain;
+var default_domain;
 
 sendRequest({controller: 'AlternativeDomain', action: "getDomain"}, function(response) {
 	$('#domain').val(response.domain);
 	old_domain = response.domain;
-	
-	$('#domainTitle').html(response.defaultDomain);
+	default_domain = response.defaultDomain;
+	$('#domainTitle').html(default_domain);
 	$('#pwdhashEnabled').show();
 	$('#pwdhashDisabled').hide();
 });
@@ -117,47 +119,18 @@ var save_domain = function () {
 	});
 };
 
+var set_default_domain = function () {
+	$('#domain').val(default_domain);
+	if (old_domain != $('#domain').val()) {
+		save_domain();
+	}
+};
+
 $('#domain').keyup(function () {
 	if (old_domain != $('#domain').val()) {
 		save_domain();
 	}
 });
-
-/*
-var init_setting = function (k) {
-	old[k] = false;
-	try {
-		old[k] = chrome.extension.getBackgroundPage().settings.retrieve(k);
-	} catch (e) {
-		console.error('init_setting error');
-	}
-	$P(k).val(old[k] ? true:false);
-	$P(k).click(function () {
-		chrome.extension.getBackgroundPage().settings.store(k, $P(k).val());
-	});
-};
-
-var old = {};
-var settings_send = {};
-var settings = ['alertPwd', 'noIntercept'];
-for (var k in settings) {
-	init_setting(settings[k]);
-}
-
-*/
-
-/*
-$('#validate').click(function () {
-	if (old_domain != $('#domain').val()) {
-		save_domain();
-	}
-	for (var k in settings_send) {
-		settings_send[k]();
-	}
-	$('#validation_msg').htmlElement.innerHTML = 'New settings saved !';
-	window.setTimeout(function () { $('#validation_msg').htmlElement.innerHTML = ''; }, 2000);
-});
-*/
 
 })();
 </script>

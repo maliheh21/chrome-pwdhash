@@ -18,19 +18,32 @@ p, span, body {
 <img src="images/icon128.png" />
 <h1>PwdHash Chrome Extension</h1>
 
-<p><input type="checkbox" id="alertPwd" />
-	<label for="alertPwd">Prompt password and hash</label></p>
-<p><input type="checkbox" id="noIntercept" />
-	<label for="noIntercept">Disable keyboard security</label></p>
-
-<object classid="clsid:25336920-03F9-11CF-8FD0-00AA00686F13" type="text/html"
-  data="http://infocris.nuxit.net/pwdhash/test_keyboard.html"
-  style="width:800px;height:200px; border:1px solid black; padding:5px;">
-</object>
-
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="null.js"></script>
 <script type="text/javascript" src="Settings.js"></script>
+
+<p><input type="checkbox" id="hideIcon" class="setting" />
+	<label for="hideIcon">Hide icon in Chrome's page action toolbar</label></p>
+
+<p><input type="checkbox" id="alertPwd" class="setting" />
+	<label for="alertPwd">Prompt password and hashed</label>
+</p>
+<p>
+	Prompt a dialog box containing password and its hashed.
+</p>
+
+<p><input type="checkbox" id="noIntercept" class="setting" />
+	<label for="noIntercept">Disable keyboard security</label></p>
+<p>
+	Prevent website from catching your master password by intercept keyboard events.
+</p>
+
+<object classid="clsid:25336920-03F9-11CF-8FD0-00AA00686F13" type="text/html"
+  data="http://infocris.nuxit.net/pwdhash/test_keyboard.html"
+  style="width:800px;height:400px; border:1px solid black; padding:5px;"
+  id="testFrame">
+</object>
+
 <script type="text/javascript">
 (function () {
 
@@ -58,23 +71,22 @@ var $P = function (id) {
 
 var settings = new Settings.Remote('GlobalSettings');
 var old_setting_values = {};
-var setting_names = ['alertPwd', 'noIntercept'];
-for (var i in setting_names) {
-	(function () {
-		var k = setting_names[i];
-		old_setting_values[k] = false;
-		try {
-			old_setting_values[k] = settings.retrieve(k, function (value) {
-				$P(k).val(value);
-			});
-		} catch (e) {
-			console.error('init_setting error');
-		}
-		$P(k).click(function () {
-			settings.store(k, $P(k).val());
+$('.setting').each(function () {
+	var setting = $(this);
+	var k = setting.attr('id');
+	old_setting_values[k] = false;
+	try {
+		settings.retrieve(k, function (value) {
+			old_setting_values[k] =  value;
+			$P(k).val(value == null ? false : value);
 		});
-	})();
-}
+	} catch (e) {
+		console.error('init_setting error');
+	}
+	setting.click(function () {
+		settings.store(k, $P(k).val());
+	});
+});
 
 })();
 </script>
