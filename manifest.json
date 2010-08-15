@@ -28,9 +28,9 @@
     "128": "images/icon128.png"
   },
   "permissions": ["tabs"],
-  "browser_action": {
-    "default_icon": "images/icon32off.png",
+  "page_action": {
+    "default_icon": "images/icon19off.png",
     "default_title": "PwdHash",
-    "popup": "popup.html"
+    "default_popup": "popup.html"
   }
 }

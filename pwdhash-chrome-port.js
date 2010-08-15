@@ -232,6 +232,13 @@ var PasswordInputListener = (function () {
 	}
 	
 	var classMethods = {
+		existsInputs: function () {
+			this.items = [];
+			this.searchFields('//input[@type="password"]');
+			this.searchFields('//input[@type="PASSWORD"]');
+			this.searchFields('//input[@type="Password"]');
+			return this.items.length != 0;
+		},
 		searchInputs: function () {
 			this.items = [];
 			this.searchFields('//input[@type="password"]');
@@ -291,8 +298,13 @@ var PasswordInputListener = (function () {
 			chrome.extension.sendRequest({controller: 'Background_HTML', action: 'setPwdHashIconOff'});
 		}
 	});
-		
-	Self.searchInputs();
-
+	
+	window.addEventListener('load', function() {
+		Self.searchInputs();
+		if (Self.existsInputs()) {
+			chrome.extension.sendRequest({controller: 'Background_HTML', action: 'showPwdHashIcon'});
+		}
+	});
+	
 	return Self;
 }) ();
