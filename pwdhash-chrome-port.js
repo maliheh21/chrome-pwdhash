@@ -29,7 +29,16 @@
 **/
 
 var PasswordInputListener = (function () {
-	var console = NullConsole;
+	var dconsole = NullConsole;
+	if (false) {
+		dconsole = (function (consoleScript) {
+			return {
+				log: function (a0, a1, a2) { console.log(consoleScript, a0, a1, a2); },
+				error: function (a0, a1, a2) { console.error(consoleScript, a0, a1, a2); },
+				warn: function (a0, a1, a2) { console.warn(consoleScript, a0, a1, a2); }
+			};
+		})('[pwdhash-chrome-port.js]');
+	}
 	
 	const VK_F2 = 113;
 	const VK_TAB = 9;
@@ -67,7 +76,7 @@ var PasswordInputListener = (function () {
 			},
 			keydown: function(e) {
 				if (e.keyCode == SPH_kPasswordKey2) {
-					console.log('Press on F2');
+					dconsole.log('Press on F2');
 					self.togglePasswordStatus();
 					if (!pwdhash_enabled) {
 						e.stopPropagation();
@@ -86,12 +95,12 @@ var PasswordInputListener = (function () {
 				this.pwdfocus();
 			},
 			handleEvent: function(e) {
-				//console.log('event: ' + e.type + ', pwdhash_enabled: ' + pwdhash_enabled);
+				//dconsole.log('event: ' + e.type + ', pwdhash_enabled: ' + pwdhash_enabled);
 				
 				if (this[e.type] != undefined) this[e.type](e);
 			},
 			pwdblur: function() {
-				//console.log('pwdblur');
+				//dconsole.log('pwdblur');
 				if (pwdhash_enabled) {
 					if (self.keyhooker.getValue() != '') {
 						self.submitPassword();
@@ -100,7 +109,7 @@ var PasswordInputListener = (function () {
 				}
 			},
 			pwdfocus: function() {
-				//console.log('pwdfocus');
+				//dconsole.log('pwdfocus');
 				selected = field;
 				if (pwdhash_enabled) {
 					self.keyhooker.intercept();
@@ -115,7 +124,7 @@ var PasswordInputListener = (function () {
 		var methods = {
 			initialize: function () {
 				for (var k in registered) {
-					console.log(field);
+					dconsole.log(field);
 					if (registered[k].field == field) return;
 				}
 
@@ -127,7 +136,7 @@ var PasswordInputListener = (function () {
 				index = registered.length;
 				registered.push(this);
 				
-				console.log('PwdHash ADD Listeners (count: ' + registered.length + ')');
+				dconsole.log('PwdHash ADD Listeners (count: ' + registered.length + ')');
 				field.addEventListener('keydown', evlistener, true);
 				field.addEventListener('change', evlistener, true);
 				field.addEventListener('focus', evlistener, true);
@@ -157,7 +166,7 @@ var PasswordInputListener = (function () {
 			},
 			
 			destroy: function () {
-				console.log('PwdHash REMOVE Listeners (count: ' + registered.length + ')');
+				dconsole.log('PwdHash REMOVE Listeners (count: ' + registered.length + ')');
 				
 				field.removeEventListener('keydown', evlistener, true);
 				field.removeEventListener('change', evlistener, true);
@@ -165,8 +174,8 @@ var PasswordInputListener = (function () {
 				field.removeEventListener('blur', evlistener, true);
 				field.removeEventListener('keyup', evlistener, true);
 				field.removeEventListener('keypress', evlistener, true);
+				this.keyhooker.unIntercept();
 				if (pwdhashed) {
-					this.keyhooker.unIntercept();
 					field.value = last_password;
 				}
 				field.pwdHashListener = null;
@@ -181,13 +190,13 @@ var PasswordInputListener = (function () {
 				field.value = '';
 				
 				if (pwdhash_enabled) {
-					console.log('PwdHash turn on');
+					dconsole.log('PwdHash turn on');
 					field.style.backgroundColor = '#ff0';
 					this.keyhooker.intercept();
 					chrome.extension.sendRequest({controller: 'Background_HTML', action: 'setPwdHashIconOn'});
 					
 				} else {
-					console.log('PwdHash turn off');
+					dconsole.log('PwdHash turn off');
 					field.style.backgroundColor = '#fff';
 					this.keyhooker.unIntercept();
 					chrome.extension.sendRequest({controller: 'Background_HTML', action: 'setPwdHashIconOff'});
