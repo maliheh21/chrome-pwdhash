@@ -26,7 +26,16 @@
 
 var KeyHooker = (function () {
 
-var console = NullConsole;
+var dconsole = NullConsole;
+if (false) {
+	dconsole = (function (consoleScript) {
+		return {
+			log: function (a0, a1, a2) { console.log(consoleScript, a0, a1, a2); },
+			error: function (a0, a1, a2) { console.error(consoleScript, a0, a1, a2); },
+			warn: function (a0, a1, a2) { console.warn(consoleScript, a0, a1, a2); }
+		};
+	})('[KeyHooker.js]');
+}
 
 const VK_RETURN = 13;
 const VK_BACKSPACE = 8;
@@ -37,17 +46,18 @@ const VK_CAPSLOCK = 20;
 var KBListeners = {
 	listeners: {},
 	addListener: function (handle) {
-		console.log('ADD - KBListeners Length: ', this.listeners);
+		dconsole.log('ADD - KBListeners Length: ', this.listeners);
 		if (typeof this.listeners[handle.instanceNo] == 'undefined') {
 			this.listeners[handle.instanceNo] = handle;
 		}
 	},
 	removeListener: function (handle) {
-		console.log('REMOVE - KBListeners Length: ', this.listeners);
+		dconsole.log('REMOVE - KBListeners Length: ', this.listeners);
 		delete this.listeners[handle.instanceNo];
 	},
 };
 var KBListenerHandler = function (e) {
+	dconsole.log();
 	for (var i in KBListeners.listeners) {
 		KBListeners.listeners[i].handleEvent(e);
 	}
@@ -67,11 +77,11 @@ var ComplexKeyHooker = (function () {
 		this.charmap = {};
 		this.instanceNo = KeyHookerInstanceCount++;
 		this.intercept = function() {
-			console.log('intercept');
+			dconsole.log('intercept');
 			KBListeners.addListener(this);
 		};
 		this.unIntercept = function() {
-			console.log('unIntercept');
+			dconsole.log('unIntercept');
 			KBListeners.removeListener(this);
 		};
 		this.mask = function (c) {
@@ -82,14 +92,14 @@ var ComplexKeyHooker = (function () {
 			var m = CHAR_LIST[i];
 			this.charmap[m] = c;
 			this.value += c;
-			console.log(c + ' -> ' + m);
+			dconsole.log(c + ' -> ' + m);
 			return m;
 		},
 		this.handleEvent = function(e) {
-			//console.log('[PwdHash] ' + e.type + ': ' + e.keyCode + ' ' + String.fromCharCode(e.keyCode));
+			//dconsole.log('[PwdHash] ' + e.type + ': ' + e.keyCode + ' ' + String.fromCharCode(e.keyCode));
 			
 			if (e.generatedByKeyHooker) {
-				console.log('intercept a generatedByKeyHooker');
+				dconsole.log('intercept a generatedByKeyHooker');
 				return;
 			}
 			
@@ -98,7 +108,7 @@ var ComplexKeyHooker = (function () {
 				if (!(VK_NUM_0 <= e.keyCode && e.keyCode <= VK_DIVIDE)) {
 					return;
 				}
-				//console.log('Keydown KeyUp events');
+				//dconsole.log('Keydown KeyUp events');
 				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 			}
 			
@@ -107,7 +117,7 @@ var ComplexKeyHooker = (function () {
 					return;
 				}
 				
-				//console.log('Printable intercepted');
+				//dconsole.log('Printable intercepted');
 				var c = String.fromCharCode(e.charCode);
 				e.stopImmediatePropagation();   // Don't let user JavaScript see this event
 				e.preventDefault();    // Do not let the character hit the page
@@ -116,12 +126,12 @@ var ComplexKeyHooker = (function () {
 			}
 		};
 		this.setHashedPassword = function (str) {
-			console.log("setHashPassword: " + str);
+			dconsole.log("setHashPassword: " + str);
 			this.value = '';
 			field.value = str;
 		};
 		this.setPassword = function (str) {
-			console.log("setPassword: " + str);
+			dconsole.log("setPassword: " + str);
 			this.value = '';
 			field.value = '';
 			this.charmap = {};
@@ -139,8 +149,8 @@ var ComplexKeyHooker = (function () {
 			for (var i = 0; i < field.value.length; i += 1) {
 				res += this.charmap[field.value[i]];
 			}
-			console.log("Field: " + field.value);
-			console.log("Password: " + res);
+			dconsole.log("Field: " + field.value);
+			dconsole.log("Password: " + res);
 			return res;
 		};
 	}
@@ -161,8 +171,6 @@ var ComplexKeyHooker = (function () {
 return ComplexKeyHooker;
 
 var SimpleKeyHooker = (function () {
-	var console = NullConsole;
-	
 	var Self = function (field) {
 		this.value = '';
 		this.instanceNo = KeyHookerInstanceCount++;
