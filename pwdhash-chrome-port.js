@@ -283,17 +283,26 @@ var PasswordInputListener = (function () {
 	// Auto-detect password inputs
 	document.addEventListener('keydown', function (e) {
 		if (e.keyCode == SPH_kPasswordKey2) {
+			dconsole.log("document.onKeyDown F2", document.location.href);
 			if (selected == null) {
-				for (var k in registered) {
-					registered[k].destroy();
+				var foundField = null;
+				if (e.target && e.target.nodeName.toLowerCase() == "input" && e.target.type.toLowerCase() == "password") {
+					foundField = new Self(e.target);
+				} else {
+					for (var k in registered) {
+						registered[k].destroy();
+					}
+					registered = [];
+					Self.searchInputs();
+					if (registered.length != 0) {
+						foundField = registered[0];
+					}
 				}
-				registered = [];
-				
-				Self.searchInputs();
-				if (registered.length != 0) {
-					registered[0].field.focus();
+				if (foundField != null) {
+					dconsole.log("input password found: ", foundField.field);
+					foundField.field.focus();
 					selected = registered[0].field;
-					registered[0].togglePasswordStatus(true);
+					foundField.togglePasswordStatus(true);
 				}
 			}
 		}

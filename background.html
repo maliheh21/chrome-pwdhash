@@ -15,31 +15,31 @@ chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
 	try {
 		if (request.action == "setPwdHashIconOn") {
 			if (!settings.retrieve('hideIcon')) {
-				chrome.tabs.getSelected(null, function(tab) {
+				//chrome.tabs.getSelected(null, function(tab) {
 					chrome[iconActionType].setIcon({
-						tabId: tab.id,
+						tabId: sender.tab.id,
 						path: "images/icon19on.png"
 					});
-				});
+				//});
 			}
 			sendResponse({ok: true});
 			
 		} else if (request.action == "setPwdHashIconOff") {
 			if (!settings.retrieve('hideIcon')) {
-				chrome.tabs.getSelected(null, function(tab) {
+				//chrome.tabs.getSelected(null, function(tab) {
 					chrome[iconActionType].setIcon({
-						tabId: tab.id,
+						tabId: sender.tab.id,
 						path: "images/icon19off.png"
 					});
-				});
+				//});
 			}
 			sendResponse({ok: true});
 			
 		} else if (request.action == "showPwdHashIcon") {
 			if (!settings.retrieve('hideIcon')) {
-				chrome.tabs.getSelected(null, function(tab) {
-					chrome[iconActionType].show(tab.id);
-				});
+				//chrome.tabs.getSelected(null, function(tab) {
+					chrome[iconActionType].show(sender.tab.id);
+				//});
 			}
 			sendResponse({ok: true});
 		}
