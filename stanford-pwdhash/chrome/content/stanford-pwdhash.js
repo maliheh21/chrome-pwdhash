@@ -53,9 +53,9 @@ function SPH_dump(msg) {
 //////////////////////////////////////////////////////////////////////////////
 // Constants
 
-const SPH_kPasswordKey = "DOM_VK_F2";
-const SPH_kPasswordPrefix = "@@";
-const SPH_kMinimumPasswordSize = 5;  // Our defense against focus stealing
+var SPH_kPasswordKey = "DOM_VK_F2";
+var SPH_kPasswordPrefix = "@@";
+var SPH_kMinimumPasswordSize = 5;  // Our defense against focus stealing
 
 ////////////////////////////////////////////////////////////////////////////
 // "Major" objects/classes
