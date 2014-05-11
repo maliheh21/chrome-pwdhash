@@ -1,8 +1,8 @@
 {
-  "name": "PwdHash port beta",
+  "name": "My hash password lite",
   "version": "0.4.3.4",
   "manifest_version": 2,
-  "description": "Pwdhash 1.7 for Chrome. Automatically generates per-site passwords if you prefix your password with @@ or F2.",
+  "description": "Pwdhash 1.7 for Chrome. More privacy. Automatically generates per-site passwords if you prefix your password with @@ or F2.",
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
@@ -28,7 +28,6 @@
     "48": "images/icon48.png",
     "128": "images/icon128.png"
   },
-  "permissions": ["tabs"],
   "page_action": {
     "default_icon": "images/icon19off.png",
     "default_title": "PwdHash",
