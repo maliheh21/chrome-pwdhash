@@ -317,12 +317,15 @@ var PasswordInputListener = (function () {
 		}
 	});
 	
-	window.addEventListener('load', function() {
-		Self.searchInputs();
-		if (Self.existsInputs()) {
-			chrome.extension.sendRequest({controller: 'Background_HTML', action: 'showPwdHashIcon'});
-		}
-	});
+	var discoverPasswordFields = function() {
+ 		Self.searchInputs();
+ 		if (Self.existsInputs()) {
+ 			chrome.extension.sendRequest({controller: 'Background_HTML', action: 'showPwdHashIcon'});
+ 		}
+	};
+	
+	window.addEventListener('load', discoverPasswordFields);
+	document.addEventListener('DOMNodeInserted', discoverPasswordFields);
 	
 	return Self;
 }) ();
